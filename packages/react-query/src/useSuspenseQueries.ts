@@ -31,11 +31,11 @@ interface ToInferWithEnabledOption<TQueryFnData, TQueryKey extends QueryKey, TEn
 }
 interface ToInferWithSelectOption<TQueryFnData, TData, TQueryKey extends QueryKey>
   extends ToInferOption<TQueryFnData, TQueryKey> {
-  select: (data: any) => TData
+  select?: (data: any) => TData
 }
 interface ToInferWithSelectEnabledOption<TQueryFnData, TData, TQueryKey extends QueryKey, TEnabled>
   extends ToInferWithEnabledOption<TQueryFnData, TQueryKey, TEnabled> {
-  select: (data: any) => TData
+  select?: (data: any) => TData
 }
 
 type GetOption<T> =
@@ -103,23 +103,30 @@ type GetResult<T> = T extends { queryFnData: any; data: infer TData }
               : T extends ToInferWithEnabledOption<unknown, QueryKey, false>
                 ? UseSuspenseQueryResultOnLoading
                 : // enabled: true
-                  T extends ToInferWithSelectEnabledOption<unknown, infer TData, QueryKey, true>
-                  ? UseSuspenseQueryResultOnSuccess<TData>
+                  T extends ToInferWithSelectEnabledOption<infer TQueryFnData, infer TData, QueryKey, true>
+                  ? UseSuspenseQueryResultOnSuccess<unknown extends TData ? TQueryFnData : TData>
                   : T extends ToInferWithEnabledOption<infer TQueryFnData, QueryKey, true>
                     ? UseSuspenseQueryResultOnSuccess<TQueryFnData>
                     : // enabled: boolean
-                      T extends ToInferWithSelectEnabledOption<unknown, infer TData, QueryKey, boolean>
-                      ? UseSuspenseQueryResultOnSuccess<TData> | UseSuspenseQueryResultOnLoading
+                      T extends ToInferWithSelectEnabledOption<infer TQueryFnData, infer TData, QueryKey, boolean>
+                      ?
+                          | UseSuspenseQueryResultOnSuccess<unknown extends TData ? TQueryFnData : TData>
+                          | UseSuspenseQueryResultOnLoading
                       : T extends ToInferWithEnabledOption<infer TQueryFnData, QueryKey, boolean>
                         ? UseSuspenseQueryResultOnSuccess<TQueryFnData> | UseSuspenseQueryResultOnLoading
                         : // no enabled
-                          T extends ToInferWithSelectOption<unknown, infer TData, QueryKey>
-                          ? UseSuspenseQueryResultOnSuccess<TData>
+                          T extends ToInferWithSelectOption<infer TQueryFnData, infer TData, QueryKey>
+                          ? UseSuspenseQueryResultOnSuccess<unknown extends TData ? TQueryFnData : TData>
                           : T extends ToInferOption<infer TQueryFnData, QueryKey>
                             ? UseSuspenseQueryResultOnSuccess<TQueryFnData>
                             : // enabled: undefined
-                              T extends ToInferWithSelectEnabledOption<unknown, infer TData, QueryKey, undefined>
-                              ? UseSuspenseQueryResultOnSuccess<TData>
+                              T extends ToInferWithSelectEnabledOption<
+                                  infer TQueryFnData,
+                                  infer TData,
+                                  QueryKey,
+                                  undefined
+                                >
+                              ? UseSuspenseQueryResultOnSuccess<unknown extends TData ? TQueryFnData : TData>
                               : T extends ToInferWithEnabledOption<infer TQueryFnData, QueryKey, undefined>
                                 ? UseSuspenseQueryResultOnSuccess<TQueryFnData>
                                 : UseSuspenseQueryResultOnSuccess<unknown>
